@@ -1,4 +1,12 @@
 // src/dynamic-forms/rendering/renderDynamicForm.ts
+/**
+ * Browser DOM renderer for dynamic forms.
+ *
+ * Source: the assignment asks for forms to render in alignment with the
+ * embedding application look and feel. The renderer therefore creates semantic
+ * native DOM elements and accepts class names, but it does not inject opinionated
+ * CSS or HTML templates.
+ */
 import {DynamicFormError} from '../errors';
 import {submitDynamicForm} from '../submission';
 import type {
@@ -16,6 +24,15 @@ import {
   showErrors,
 } from './valueState';
 
+/**
+ * Fetches or accepts a form config, renders it into a target element, and
+ * returns a lifecycle controller.
+ *
+ * This is the main browser integration API. It exists as a convenience layer on
+ * top of the headless schema, validation, submission, and transport modules. The
+ * host app can use callbacks for success/error flows while the SDK owns
+ * validation, disabling during submit, and cleanup.
+ */
 export const renderDynamicForm = async (
   options: RenderDynamicFormOptions,
 ): Promise<DynamicFormController> => {
@@ -29,6 +46,10 @@ export const renderDynamicForm = async (
   form.dataset.brDynamicFormId = config.id;
   form.dataset.brDynamicFormRevisionId = config.revisionId;
 
+  /**
+   * The title is optional because not every host placement needs a heading.
+   * Text is assigned via `textContent` to avoid rendering marketer-provided HTML.
+   */
   if (config.title) {
     const title = document.createElement('h2');
     title.textContent = config.title;
@@ -39,6 +60,10 @@ export const renderDynamicForm = async (
   const fieldElements = new Map<string, HTMLInputElement>();
   const errorElements = new Map<string, HTMLElement>();
 
+  /**
+   * Field and error elements are stored by field ID so validation errors can be
+   * shown next to the correct input and current values can be read later.
+   */
   for (const field of config.fields) {
     const rendered = renderTextField(
       field,
@@ -58,6 +83,12 @@ export const renderDynamicForm = async (
 
   target.appendChild(form);
 
+  /**
+   * Controller returned to the host application.
+   *
+   * Single-page applications need explicit lifecycle control because the SDK
+   * cannot know when a route, modal, or component tree is unmounted.
+   */
   const controller: DynamicFormController = {
     formId: config.id,
     revisionId: config.revisionId,
@@ -93,6 +124,11 @@ export const renderDynamicForm = async (
       submitButton.textContent =
         config.submitButton.pendingText ?? config.submitButton.text;
 
+      /**
+       * Submission is delegated to the headless module. This keeps rendering
+       * concerns separate from transport/tracking concerns and makes the same
+       * submission logic reusable in non-DOM environments.
+       */
       try {
         const result = await submitDynamicForm({
           config,
@@ -134,6 +170,13 @@ export const renderDynamicForm = async (
   return controller;
 };
 
+/**
+ * Resolves the form config for the renderer.
+ *
+ * The integration can either pass an already fetched config or pass `formId`
+ * plus a transport. Supporting both modes makes the SDK easier to integrate in
+ * apps that already centralize data fetching.
+ */
 const fetchConfigForRender = async (
   options: RenderDynamicFormOptions,
 ): Promise<DynamicFormConfig> => {
@@ -158,6 +201,12 @@ const fetchConfigForRender = async (
   });
 };
 
+/**
+ * Normalizes unknown submission failures into the SDK error type.
+ *
+ * Browser APIs and customer-provided tracker callbacks can throw arbitrary
+ * values. Normalization protects the public callback contract.
+ */
 const normalizeSubmissionError = (error: unknown): DynamicFormError => {
   if (error instanceof DynamicFormError) return error;
   return new DynamicFormError(
@@ -167,6 +216,12 @@ const normalizeSubmissionError = (error: unknown): DynamicFormError => {
   );
 };
 
+/**
+ * Applies host-provided class names to an element.
+ *
+ * This small helper exists because the renderer accepts space-separated class
+ * strings in the same style as normal HTML markup.
+ */
 const addClass = (element: Element, className: string | undefined): void => {
   if (!className) return;
   for (const item of className.split(/\s+/).filter(Boolean)) {

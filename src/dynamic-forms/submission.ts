@@ -1,4 +1,12 @@
 // src/dynamic-forms/submission.ts
+/**
+ * Headless submission logic.
+ *
+ * This module owns the path from validated values to either a dedicated
+ * submission endpoint or an existing tracking adapter. It is intentionally not
+ * tied to DOM rendering so React, React Native, Flutter wrappers, or tests can
+ * reuse the same payload and validation behavior.
+ */
 import {
   DEFAULT_EVENT_NAME,
   DEFAULT_SDK,
@@ -16,6 +24,14 @@ import type {
 } from './types';
 import {validateFormConfig, validateValues} from './validation';
 
+/**
+ * Validates and submits a dynamic form without depending on the DOM renderer.
+ *
+ * Source: the assignment requires submitted user inputs to be tracked back to
+ * Bloomreach Engagement and asks for customizable success/failure callbacks at
+ * the integration layer. This function performs the SDK-owned work before a
+ * renderer or host app decides how to react.
+ */
 export const submitDynamicForm = async (
   options: SubmitDynamicFormOptions,
 ): Promise<DynamicFormSubmitResult> => {
@@ -59,6 +75,14 @@ export const submitDynamicForm = async (
   );
 };
 
+/**
+ * Builds the canonical submission payload.
+ *
+ * It trims values and only includes field IDs present in the validated config.
+ * That prevents accidental submission of extra object keys supplied by host
+ * code. Form ID, revision ID, field order, and metadata are included so
+ * Bloomreach can attribute the submission to the exact marketer-defined form.
+ */
 export const buildSubmissionPayload = (
   options: SubmitDynamicFormOptions,
 ): DynamicFormSubmissionPayload => {
@@ -82,6 +106,13 @@ export const buildSubmissionPayload = (
   };
 };
 
+/**
+ * Converts the dedicated submission payload into custom event properties.
+ *
+ * Source: Bloomreach web tracking examples use custom event properties. This
+ * adapter lets the first version reuse the existing tracking pipeline while
+ * keeping the richer dedicated payload shape available for a future endpoint.
+ */
 export const toTrackingProperties = (
   payload: DynamicFormSubmissionPayload,
   config: DynamicFormConfig,
