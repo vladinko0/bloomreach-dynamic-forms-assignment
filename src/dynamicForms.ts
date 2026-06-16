@@ -26,7 +26,7 @@ export interface DynamicFormTextField {
   required?: boolean;
   minLength?: number;
   maxLength?: number;
-  autocomplete?: string;
+  autocomplete?: HTMLInputElement['autocomplete'];
   inputMode?:
     | 'text'
     | 'search'
