@@ -1,0 +1,10 @@
+{
+  "name": "bloomreach-dynamic-forms-assignment",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {}
+}
+
