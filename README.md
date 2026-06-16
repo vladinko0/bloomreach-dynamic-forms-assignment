@@ -187,6 +187,18 @@ Bloomreach's public web tracking documentation shows custom event tracking throu
 
 ## Programmatic interface
 
+### Code structure
+
+The public SDK entrypoint is `src/dynamicForms.ts`. It re-exports smaller
+modules from `src/dynamic-forms/`:
+
+- `types.ts`: public schemas, interfaces, and callback contracts.
+- `validation.ts`: form configuration and value validation.
+- `submission.ts`: submission payload building and tracking integration.
+- `transport.ts`: fetch-based API transport.
+- `rendering/`: DOM rendering, field rendering, and value/error state helpers.
+- `utils/`: small DOM and HTTP helpers.
+
 ### Render into a website
 
 ```ts
@@ -337,4 +349,3 @@ The public React Native SDK repository describes the SDK as a TypeScript wrapper
 - React Native tracking docs: https://documentation.bloomreach.com/engagement/docs/react-native-sdk-tracking
 - Web tracking docs: https://documentation.bloomreach.com/engagement/docs/web-tracking
 - In-app messages docs: https://documentation.bloomreach.com/engagement/docs/in-app-messages
-
