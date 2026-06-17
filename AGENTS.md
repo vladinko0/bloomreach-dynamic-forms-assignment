@@ -30,6 +30,7 @@ After multi-file edits, run formatting on the changed paths.
 - Prefer arrow functions: `const name = () => {}`.
 - Do not use the `void` operator.
 - Prefer `async` / `await` over promise chains.
+- Define local functions and helper constants before their first use in the same file.
 - Avoid magic strings and numbers in implementation code; extract reusable constants.
 - Keep public types explicit and stable.
 - Add the repository-relative path as the first line comment in new or edited TypeScript files.

@@ -25,57 +25,6 @@ import type {
 import {validateFormConfig, validateValues} from './validation';
 
 /**
- * Validates and submits a dynamic form without depending on the DOM renderer.
- *
- * Source: the assignment requires submitted user inputs to be tracked back to
- * Bloomreach Engagement and asks for customizable success/failure callbacks at
- * the integration layer. This function performs the SDK-owned work before a
- * renderer or host app decides how to react.
- */
-export const submitDynamicForm = async (
-  options: SubmitDynamicFormOptions,
-): Promise<DynamicFormSubmitResult> => {
-  validateFormConfig(options.config);
-
-  const validationErrors = validateValues(options.config, options.values);
-  if (Object.keys(validationErrors).length > 0) {
-    throw new DynamicFormError(
-      'validation_error',
-      'Dynamic form values are invalid',
-      validationErrors,
-    );
-  }
-
-  const payload = buildSubmissionPayload(options);
-
-  if (options.transport) {
-    return options.transport.submitForm(payload, options.signal);
-  }
-
-  if (options.tracker) {
-    const eventName = options.config.tracking?.eventName ?? DEFAULT_EVENT_NAME;
-    try {
-      await options.tracker.track(
-        eventName,
-        toTrackingProperties(payload, options.config),
-      );
-      return {status: 'accepted'};
-    } catch (error) {
-      throw new DynamicFormError(
-        'tracking_error',
-        'Dynamic form tracking failed',
-        error,
-      );
-    }
-  }
-
-  throw new DynamicFormError(
-    'tracking_error',
-    'No form transport or tracking adapter was provided',
-  );
-};
-
-/**
  * Builds the canonical submission payload.
  *
  * It trims values and only includes field IDs present in the validated config.
@@ -128,3 +77,54 @@ export const toTrackingProperties = (
   campaign_id: config.meta?.campaignId ?? null,
   experiment_variant: config.meta?.experimentVariant ?? null,
 });
+
+/**
+ * Validates and submits a dynamic form without depending on the DOM renderer.
+ *
+ * Source: the assignment requires submitted user inputs to be tracked back to
+ * Bloomreach Engagement and asks for customizable success/failure callbacks at
+ * the integration layer. This function performs the SDK-owned work before a
+ * renderer or host app decides how to react.
+ */
+export const submitDynamicForm = async (
+  options: SubmitDynamicFormOptions,
+): Promise<DynamicFormSubmitResult> => {
+  validateFormConfig(options.config);
+
+  const validationErrors = validateValues(options.config, options.values);
+  if (Object.keys(validationErrors).length > 0) {
+    throw new DynamicFormError(
+      'validation_error',
+      'Dynamic form values are invalid',
+      validationErrors,
+    );
+  }
+
+  const payload = buildSubmissionPayload(options);
+
+  if (options.transport) {
+    return options.transport.submitForm(payload, options.signal);
+  }
+
+  if (options.tracker) {
+    const eventName = options.config.tracking?.eventName ?? DEFAULT_EVENT_NAME;
+    try {
+      await options.tracker.track(
+        eventName,
+        toTrackingProperties(payload, options.config),
+      );
+      return {status: 'accepted'};
+    } catch (error) {
+      throw new DynamicFormError(
+        'tracking_error',
+        'Dynamic form tracking failed',
+        error,
+      );
+    }
+  }
+
+  throw new DynamicFormError(
+    'tracking_error',
+    'No form transport or tracking adapter was provided',
+  );
+};

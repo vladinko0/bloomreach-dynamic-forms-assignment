@@ -25,6 +25,65 @@ import {
 } from './valueState';
 
 /**
+ * Resolves the form config for the renderer.
+ *
+ * The integration can either pass an already fetched config or pass `formId`
+ * plus a transport. Supporting both modes makes the SDK easier to integrate in
+ * apps that already centralize data fetching.
+ */
+const fetchConfigForRender = async (
+  options: RenderDynamicFormOptions,
+): Promise<DynamicFormConfig> => {
+  if (!options.formId) {
+    throw new DynamicFormError(
+      'render_error',
+      'Either config or formId must be provided',
+    );
+  }
+  if (!options.transport) {
+    throw new DynamicFormError(
+      'render_error',
+      'Transport is required when config is not provided',
+    );
+  }
+
+  return options.transport.fetchFormConfig({
+    formId: options.formId,
+    placement: options.placement,
+    locale: options.locale,
+    signal: options.signal,
+  });
+};
+
+/**
+ * Normalizes unknown submission failures into the SDK error type.
+ *
+ * Browser APIs and customer-provided tracker callbacks can throw arbitrary
+ * values. Normalization protects the public callback contract.
+ */
+const normalizeSubmissionError = (error: unknown): DynamicFormError => {
+  if (error instanceof DynamicFormError) return error;
+  return new DynamicFormError(
+    'network_error',
+    'Dynamic form submission failed',
+    error,
+  );
+};
+
+/**
+ * Applies host-provided class names to an element.
+ *
+ * This small helper exists because the renderer accepts space-separated class
+ * strings in the same style as normal HTML markup.
+ */
+const addClass = (element: Element, className: string | undefined): void => {
+  if (!className) return;
+  for (const item of className.split(/\s+/).filter(Boolean)) {
+    element.classList.add(item);
+  }
+};
+
+/**
  * Fetches or accepts a form config, renders it into a target element, and
  * returns a lifecycle controller.
  *
@@ -83,13 +142,24 @@ export const renderDynamicForm = async (
 
   target.appendChild(form);
 
+  let controller: DynamicFormController;
+
+  const onSubmit = async (event: SubmitEvent) => {
+    event.preventDefault();
+    try {
+      await controller.submit();
+    } catch {
+      return;
+    }
+  };
+
   /**
    * Controller returned to the host application.
    *
    * Single-page applications need explicit lifecycle control because the SDK
    * cannot know when a route, modal, or component tree is unmounted.
    */
-  const controller: DynamicFormController = {
+  controller = {
     formId: config.id,
     revisionId: config.revisionId,
     element: form,
@@ -157,74 +227,6 @@ export const renderDynamicForm = async (
     },
   };
 
-  const onSubmit = async (event: SubmitEvent) => {
-    event.preventDefault();
-    try {
-      await controller.submit();
-    } catch {
-      return;
-    }
-  };
-
   form.addEventListener('submit', onSubmit);
   return controller;
-};
-
-/**
- * Resolves the form config for the renderer.
- *
- * The integration can either pass an already fetched config or pass `formId`
- * plus a transport. Supporting both modes makes the SDK easier to integrate in
- * apps that already centralize data fetching.
- */
-const fetchConfigForRender = async (
-  options: RenderDynamicFormOptions,
-): Promise<DynamicFormConfig> => {
-  if (!options.formId) {
-    throw new DynamicFormError(
-      'render_error',
-      'Either config or formId must be provided',
-    );
-  }
-  if (!options.transport) {
-    throw new DynamicFormError(
-      'render_error',
-      'Transport is required when config is not provided',
-    );
-  }
-
-  return options.transport.fetchFormConfig({
-    formId: options.formId,
-    placement: options.placement,
-    locale: options.locale,
-    signal: options.signal,
-  });
-};
-
-/**
- * Normalizes unknown submission failures into the SDK error type.
- *
- * Browser APIs and customer-provided tracker callbacks can throw arbitrary
- * values. Normalization protects the public callback contract.
- */
-const normalizeSubmissionError = (error: unknown): DynamicFormError => {
-  if (error instanceof DynamicFormError) return error;
-  return new DynamicFormError(
-    'network_error',
-    'Dynamic form submission failed',
-    error,
-  );
-};
-
-/**
- * Applies host-provided class names to an element.
- *
- * This small helper exists because the renderer accepts space-separated class
- * strings in the same style as normal HTML markup.
- */
-const addClass = (element: Element, className: string | undefined): void => {
-  if (!className) return;
-  for (const item of className.split(/\s+/).filter(Boolean)) {
-    element.classList.add(item);
-  }
 };

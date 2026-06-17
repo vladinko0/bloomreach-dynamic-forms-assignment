@@ -10,6 +10,21 @@ import {SUPPORTED_FIELD_TYPE} from '../constants';
 import type {DynamicFormTextField, RenderDynamicFormOptions} from '../types';
 
 /**
+ * Builds a deterministic DOM ID from the stable field ID.
+ */
+const inputId = (fieldId: string): string => `br-dynamic-form-${fieldId}`;
+
+/**
+ * Applies host-provided CSS class names to one element.
+ */
+const addClass = (element: Element, className: string | undefined): void => {
+  if (!className) return;
+  for (const item of className.split(/\s+/).filter(Boolean)) {
+    element.classList.add(item);
+  }
+};
+
+/**
  * Creates the DOM subtree for one text field.
  *
  * The function returns the wrapper, input, and error element because the main
@@ -61,19 +76,4 @@ export const renderTextField = (
 
   root.append(label, input, error);
   return {root, input, error};
-};
-
-/**
- * Builds a deterministic DOM ID from the stable field ID.
- */
-const inputId = (fieldId: string): string => `br-dynamic-form-${fieldId}`;
-
-/**
- * Applies host-provided CSS class names to one element.
- */
-const addClass = (element: Element, className: string | undefined): void => {
-  if (!className) return;
-  for (const item of className.split(/\s+/).filter(Boolean)) {
-    element.classList.add(item);
-  }
 };

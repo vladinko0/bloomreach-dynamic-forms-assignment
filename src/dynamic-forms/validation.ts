@@ -17,6 +17,19 @@ import {DynamicFormError} from './errors';
 import type {DynamicFormConfig, FormValues} from './types';
 
 /**
+ * Checks whether a form or field ID is safe for payload keys and DOM-derived IDs.
+ *
+ * This constraint is a defensive SDK choice rather than a direct assignment
+ * requirement. It avoids empty IDs, IDs starting with numbers, very long keys,
+ * and characters that can make debugging selectors or analytics properties
+ * painful.
+ */
+export const isSafeId = (value: string): boolean => {
+  const maxLengthPattern = `{0,${FIELD_ID_MAX_LENGTH - 1}}`;
+  return new RegExp(`^[a-zA-Z][a-zA-Z0-9_-]${maxLengthPattern}$`).test(value);
+};
+
+/**
  * Validates a server-provided form configuration before rendering it.
  *
  * This exists because SDKs should fail predictably when a campaign payload is
@@ -153,17 +166,4 @@ export const validateValues = (
   }
 
   return errors;
-};
-
-/**
- * Checks whether a form or field ID is safe for payload keys and DOM-derived IDs.
- *
- * This constraint is a defensive SDK choice rather than a direct assignment
- * requirement. It avoids empty IDs, IDs starting with numbers, very long keys,
- * and characters that can make debugging selectors or analytics properties
- * painful.
- */
-export const isSafeId = (value: string): boolean => {
-  const maxLengthPattern = `{0,${FIELD_ID_MAX_LENGTH - 1}}`;
-  return new RegExp(`^[a-zA-Z][a-zA-Z0-9_-]${maxLengthPattern}$`).test(value);
 };
