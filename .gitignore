@@ -1,0 +1,14 @@
+# .gitignore
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store
+
+# Local dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Local environment files
+.env
+.env.*
